@@ -53,6 +53,10 @@ public abstract class Move {
         return false;
     }
 
+    public boolean isCastlingMove() {
+        return false;
+    }
+
     public Piece getAttackedPiece() {
         return null;
     }
@@ -212,6 +216,11 @@ public abstract class Move {
             Board newBoard = builder.build();
             newBoard.getCurrentPlayer().getOpponent().isCastled = true;
             return newBoard;
+        }
+
+        @Override
+        public boolean isCastlingMove() {
+            return true;
         }
 
     }

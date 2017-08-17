@@ -123,7 +123,7 @@ public class Board {
             builder.setPiece(new Knight(row * 8 + 1, side, false));
             builder.setPiece(new Bishop(row * 8 + 2, side, false));
             builder.setPiece(new Queen(row * 8 + 3, side, false));
-            builder.setPiece(new King(row * 8 + 4, side, false));
+            builder.setPiece(new King(row * 8 + 4, side, false, false, false, false));
             builder.setPiece(new Bishop(row * 8 + 5, side, false));
             builder.setPiece(new Knight(row * 8 + 6, side, false));
             builder.setPiece(new Rook(row * 8 + 7, side, false));

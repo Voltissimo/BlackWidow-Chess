@@ -13,9 +13,16 @@ import static com.chess.engine.board.Move.*;
 
 public class King extends Piece {
     private static int[] CANDIDATE_MOVE_COORDINATE = {-9, -8, -7, -1, 1, 7, 8, 9};
+    public final boolean isCastled;
+    public final boolean kingSideCastleAvailable;
+    public final boolean queenSideCastleAvailable;
 
-    public King(int piecePosition, Alliance pieceAlliance, boolean moved) {
+    public King(int piecePosition, Alliance pieceAlliance, boolean moved,
+                boolean isCastled, boolean kingSideCastleAvailable, boolean queenSideCastleAvailable) {
         super(PieceType.KING, piecePosition, pieceAlliance, moved);
+        this.kingSideCastleAvailable = kingSideCastleAvailable;
+        this.queenSideCastleAvailable = queenSideCastleAvailable;
+        this.isCastled = isCastled;
     }
 
     @Override
@@ -54,6 +61,14 @@ public class King extends Piece {
 
     @Override
     public King movePiece(Move move) {
-        return new King(move.getDestinationCoordinate(), move.getMovedPiece() .getPieceAlliance(), true);
+        return new King(move.getDestinationCoordinate(), move.getMovedPiece().getPieceAlliance(), true, move.isCastlingMove(), false, false);
+    }
+
+    public boolean isKingSideCastleAvailable() {
+        return false;
+    }
+
+    public boolean isQueenSideCastleAvailable() {
+        return false;
     }
 }

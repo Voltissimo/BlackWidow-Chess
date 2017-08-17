@@ -18,7 +18,7 @@ public class BoardUtils {
         return POSITION_TO_COORDINATE.get(position);
     }
 
-    static String getPositionAtCoordinate(int coordinate) {
+    public static String getPositionAtCoordinate(int coordinate) {
         int row = coordinate / 8;
         int col = coordinate % 8;
         final String[] RANK_NAME = new String[] {"a", "b", "c", "d", "e", "f", "g", "h"};

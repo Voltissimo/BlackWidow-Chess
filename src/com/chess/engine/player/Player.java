@@ -106,6 +106,14 @@ public abstract class Player {
         return new MoveTransition(transitionBoard, /*move, */MoveStatus.DONE);
     }
 
+    public boolean isKingSideCastleAvailable() {
+        return this.playerKing.isKingSideCastleAvailable();
+    }
+
+    public boolean isQueenSideCastleAvailable() {
+        return this.playerKing.isQueenSideCastleAvailable();
+    }
+
     private boolean checkTransitionMoves(List<Integer> transitionTilesCoordinates, Collection<Move> opponentMoves) {
         for (int tileCoordinate : transitionTilesCoordinates) {
             if (this.board.getTile(tileCoordinate).isTileOccupied()
