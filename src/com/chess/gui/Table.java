@@ -7,7 +7,8 @@ import com.chess.engine.board.Tile;
 import com.chess.engine.pieces.Piece;
 import com.chess.engine.player.MoveStatus;
 import com.chess.engine.player.MoveTransition;
-import com.chess.engine.player.ai.MiniMax;
+import com.chess.engine.player.ai.AlphaBeta;
+/*import com.chess.engine.player.ai.MiniMax;*/
 import com.chess.engine.player.ai.MoveStrategy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -46,6 +47,8 @@ public class Table extends Observable {
     private static final Color LIGHT_TILE_COLOR = Color.decode("#FFFACD");
     private static final Color DARK_TILE_COLOR = Color.decode("#593E1A");
 
+    private static boolean dispatched = false;
+
     static final String DEFAULT_PIECE_IMAGES_PATH = "art/pieces/simple/";
     private boolean highlightLegalMoves;
 
@@ -80,9 +83,12 @@ public class Table extends Observable {
             if (Table.get().getGameSetup().isAIPlayer(Table.get().getGameBoard().getCurrentPlayer())
                     && !Table.get().getGameBoard().getCurrentPlayer().isInCheckMate()
                     && !Table.get().getGameBoard().getCurrentPlayer().isInStaleMate()) {
-                // create an AI thread
-                final AIThinkTank thinkTank = new AIThinkTank();
-                thinkTank.execute();
+                if (!dispatched) {
+                    dispatched = true;
+                    // create an AI thread
+                    final AIThinkTank thinkTank = new AIThinkTank();
+                    thinkTank.execute();
+                }
             }
 
             if (Table.get().getGameBoard().getCurrentPlayer().isInCheckMate()) {
@@ -111,21 +117,25 @@ public class Table extends Observable {
 
         @Override
         protected Move doInBackground() throws Exception {
-            final MoveStrategy miniMax = new MiniMax(Table.get().gameSetup.getSearchDepth());
+            final MoveStrategy alphaBeta = new AlphaBeta(Table.get().gameSetup.getSearchDepth());
+            /*final MoveStrategy miniMax = new MiniMax(Table.get().gameSetup.getSearchDepth());*/
 
-            return miniMax.execute(Table.get().getGameBoard());
+            return alphaBeta.execute(Table.get().getGameBoard());
+            /*return miniMax.execute(Table.get().getGameBoard());*/
         }
 
         @Override
         protected void done() {
             try {
                 final Move bestMove = get();
-                Table.get().updateGameBoard(Table.get().getGameBoard().getCurrentPlayer().makeMove(bestMove).getBoard());
+                final Board newBoard = Table.get().getGameBoard().getCurrentPlayer().makeMove(bestMove).getBoard();
+                Table.get().updateGameBoard(newBoard);
                 Table.get().moveLog.addMove(bestMove, Table.get().getGameBoard());
                 Table.get().gameHistoryPanel.redo(Table.get().moveLog);
                 Table.get().takenPiecesPanel.redo(Table.get().moveLog);
-                Table.get().boardPanel.drawBoard(Table.get().getGameBoard());
+                Table.get().boardPanel.drawBoard(newBoard);
                 Table.get().moveMadeUpdate(PlayerType.COMPUTER);
+                dispatched = false;
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
@@ -356,20 +366,23 @@ public class Table extends Observable {
                             destinationTile = chessBoard.getTile(tileId);
                             final Move move = Move.MoveFactory.createMove(chessBoard, sourceTile.tileCoordinate, destinationTile.tileCoordinate);
                             final MoveTransition transition = chessBoard.getCurrentPlayer().makeMove(move);
-                            if (transition.getMoveStatus() == MoveStatus.DONE) {
-                                chessBoard = transition.getBoard();
-                                moveLog.addMove(move, chessBoard);
+                            // prevent player to make move while bot is thinking
+                            if (!Table.get().gameSetup.isAIPlayer(chessBoard.getCurrentPlayer())) {
+                                if (transition.getMoveStatus() == MoveStatus.DONE) {
+                                    chessBoard = transition.getBoard();
+                                    moveLog.addMove(move, chessBoard);
 
-                                // reset
-                                sourceTile = null;
-                                humanMovedPiece = null;
-                                destinationTile = null;
-                            } else {
-                                // choose a new tile
-                                sourceTile = chessBoard.getTile(tileId);
-                                humanMovedPiece = sourceTile.getPiece();
-                                if (humanMovedPiece == null) {
+                                    // reset
                                     sourceTile = null;
+                                    humanMovedPiece = null;
+                                    destinationTile = null;
+                                } else {
+                                    // choose a new tile
+                                    sourceTile = chessBoard.getTile(tileId);
+                                    humanMovedPiece = sourceTile.getPiece();
+                                    if (humanMovedPiece == null) {
+                                        sourceTile = null;
+                                    }
                                 }
                             }
                         }
