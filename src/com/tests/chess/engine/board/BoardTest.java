@@ -68,7 +68,7 @@ public class BoardTest {
                 BoardUtils.getCoordinateAtPosition("d8"),
                 BoardUtils.getCoordinateAtPosition("h4"));
 
-         assertEquals(aiMove, bestMove);
+        assertEquals(aiMove, bestMove);
     }
 
     @Test
@@ -95,6 +95,48 @@ public class BoardTest {
                 BoardUtils.getCoordinateAtPosition("h4"));
 
         assertEquals(bestMove, aiMove);
+    }
+
+    @Test
+    public void testQueenMoveGeneration() {
+        Board board = Board.createStandardBoard();
+        final String[][] moves = {
+                {"e2", "e4"},  // e4
+                {"e7", "e6"},  // e6
+
+                {"g1", "h3"},  // Nh3
+                {"d8", "h4"},  // Qh4
+
+                {"g2", "g3"}, // g3
+                {"h4", "e4"}, // Qxe4+
+
+                {"f1", "e2"}, // Be2
+                {"e4", "h1"}, // Qxh1+
+
+                {"e2", "f1"}, // Bf1
+                // Bug: Qxa1 is a legal move - queen can move from h1 to a1
+        };
+        for (final String[] moveStrings : moves) {
+            final String pieceCoordinate = moveStrings[0];
+            final String destinationCoordinate = moveStrings[1];
+            final MoveTransition moveTransition = board.getCurrentPlayer().makeMove(
+                    Move.MoveFactory.createMove(
+                            board,
+                            BoardUtils.getCoordinateAtPosition(pieceCoordinate),
+                            BoardUtils.getCoordinateAtPosition(destinationCoordinate)
+                    )
+            );
+            assertEquals(MoveStatus.DONE, moveTransition.getMoveStatus());
+            board = moveTransition.getBoard();
+        }
+        MoveTransition queenTeleportationMove = board.getCurrentPlayer().makeMove(
+                Move.MoveFactory.createMove(
+                        board,
+                        BoardUtils.getCoordinateAtPosition("h1"),
+                        BoardUtils.getCoordinateAtPosition("a1")
+                )
+        );
+        assertEquals(MoveStatus.ILLEGAL_MOVE, queenTeleportationMove.getMoveStatus());
     }
 
 }

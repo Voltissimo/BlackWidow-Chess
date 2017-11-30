@@ -31,6 +31,10 @@ public class Queen extends Piece {
         final List<Move> legalMoves = new ArrayList<>();
 
         for (int candidateCoordinateOffset : CANDIDATE_MOVE_VECTOR_COORDINATE) {
+            if ((piecePosition % 8 == 0 && candidateCoordinateOffset == 7)
+                    || (piecePosition % 8 == 7 && candidateCoordinateOffset == -7)) {
+                continue;
+            }
             int candidateDestinationCoordinate = this.piecePosition;
 
             while (true) {
@@ -71,6 +75,6 @@ public class Queen extends Piece {
 
     @Override
     public Queen movePiece(Move move) {
-        return new Queen(move.getDestinationCoordinate(), move.getMovedPiece() .getPieceAlliance(), true);
+        return new Queen(move.getDestinationCoordinate(), move.getMovedPiece().getPieceAlliance(), true);
     }
 }
