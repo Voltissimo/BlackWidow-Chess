@@ -5,6 +5,8 @@ import com.chess.engine.board.Move;
 import com.chess.engine.player.MoveStatus;
 import com.chess.engine.player.MoveTransition;
 
+import java.util.Collection;
+
 public class MiniMax implements MoveStrategy {
     private final BoardEvaluator boardEvaluator;
     private final int depth;
@@ -56,11 +58,12 @@ public class MiniMax implements MoveStrategy {
     }
 
     private int min(Board board, int depth) {
-        if (depth == 0 /*|| game over*/) {
+        Collection<Move> moves = board.getCurrentPlayer().getLegalMoves();
+        if (depth == 0 || moves.size() == 0) {
             return this.boardEvaluator.evaluate(board, depth);
         }
         int lowestValue = Integer.MAX_VALUE;
-        for (Move move : board.getCurrentPlayer().getLegalMoves()) {
+        for (Move move : moves) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus() == MoveStatus.DONE) {
                 int currentValue = max(moveTransition.getBoard(), depth - 1);
@@ -73,11 +76,12 @@ public class MiniMax implements MoveStrategy {
     }
 
     private int max(Board board, int depth) {
-        if (depth == 0 /*|| game over*/) {
+        Collection<Move> moves = board.getCurrentPlayer().getLegalMoves();
+        if (depth == 0 || moves.size() == 0) {
             return this.boardEvaluator.evaluate(board, depth);
         }
         int highestValue = Integer.MIN_VALUE;
-        for (Move move : board.getCurrentPlayer().getLegalMoves()) {
+        for (Move move : moves) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus() == MoveStatus.DONE) {
                 int currentValue = min(moveTransition.getBoard(), depth - 1);
