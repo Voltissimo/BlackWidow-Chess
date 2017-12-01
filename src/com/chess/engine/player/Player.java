@@ -36,6 +36,11 @@ public abstract class Player {
         return playerKing;
     }
 
+    @Override
+    public String toString() {
+        return this.getAlliance().toString();
+    }
+
     public Collection<Move> getLegalMoves() {
         return legalMoves;
     }

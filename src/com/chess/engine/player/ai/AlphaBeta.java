@@ -4,6 +4,7 @@ import com.chess.engine.board.Board;
 import com.chess.engine.board.Move;
 import com.chess.engine.player.MoveStatus;
 import com.chess.engine.player.MoveTransition;
+import com.chess.gui.Table;
 
 import java.util.Collection;
 
@@ -27,7 +28,6 @@ public class AlphaBeta implements MoveStrategy {
     }
 
 
-
     @Override
     public Move execute(Board board) {
         System.out.println(board.getCurrentPlayer() + " " + toString() + " thinking with DEPTH = " + depth);
@@ -42,8 +42,11 @@ public class AlphaBeta implements MoveStrategy {
 
         int numMoves = board.getCurrentPlayer().getLegalMoves().size();
         int moveCount = 0;
+        Table.get().progressBarPanel.setMaximum(numMoves);
+        Table.get().progressBarPanel.setStringPainted(false);
         for (final Move move : board.getCurrentPlayer().getLegalMoves()) {
             System.out.printf("move: %d / %d\n", ++moveCount, numMoves);
+            Table.get().progressBarPanel.setValue(moveCount);
             final MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus() == MoveStatus.DONE) {
                 score = board.getCurrentPlayer().getAlliance().isWhite() ?
@@ -59,8 +62,11 @@ public class AlphaBeta implements MoveStrategy {
                 }
             }
         }
-        final long executionTime = System.currentTimeMillis() - startTime;
-        System.out.printf("Total time: %f sec\n", (float) executionTime / 1000);
+        final float executionTime = (float) (System.currentTimeMillis() - startTime) / 1000;
+
+        System.out.printf("Total time: %f sec\n", executionTime);
+        Table.get().progressBarPanel.setStringPainted(true);
+        Table.get().progressBarPanel.setString(String.valueOf(executionTime) + " sec");
         return bestMove;
     }
 

@@ -80,6 +80,7 @@ class TakenPiecesPanel extends JPanel {
             }
         }
 
+        repaint();
         validate();
     }
 

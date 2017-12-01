@@ -10,6 +10,7 @@ import com.chess.engine.player.MoveTransition;
 import com.chess.engine.player.ai.AlphaBeta;
 /*import com.chess.engine.player.ai.MiniMax;*/
 import com.chess.engine.player.ai.MoveStrategy;
+import com.chess.pgn.FenUtilities;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
@@ -29,16 +30,16 @@ import static javax.swing.SwingUtilities.isLeftMouseButton;
 
 public class Table extends Observable {
     private Board chessBoard;
-    private BoardPanel boardPanel;
+    private final BoardPanel boardPanel;
     private final MoveLog moveLog;
     private final GameHistoryPanel gameHistoryPanel;
     private final TakenPiecesPanel takenPiecesPanel;
+    public final JProgressBar progressBarPanel;
     private GameSetup gameSetup;
 
     private Tile sourceTile;
     private Tile destinationTile;
     private Piece humanMovedPiece;
-    /*private BoardDirection boardDirection;*/
 
     private static final Dimension TILE_PANEL_DIMENSION = new Dimension(10, 10);
     private static final Dimension OUTER_FRAME_DIMENSION = new Dimension(600, 600);
@@ -92,11 +93,11 @@ public class Table extends Observable {
             }
 
             if (Table.get().getGameBoard().getCurrentPlayer().isInCheckMate()) {
-                JOptionPane.showMessageDialog(Table.get().boardPanel, Table.get().getGameBoard().getCurrentPlayer().getOpponent().toString() + " WON");
+                JOptionPane.showMessageDialog(Table.get().boardPanel, Table.get().getGameBoard().getCurrentPlayer().getOpponent().toString() + " won.");
             }
 
             if (Table.get().getGameBoard().getCurrentPlayer().isInStaleMate()) {
-                JOptionPane.showMessageDialog(Table.get().boardPanel, "STALEMATE");
+                JOptionPane.showMessageDialog(Table.get().boardPanel, "Stalemate.");
             }
         }
     }
@@ -111,10 +112,6 @@ public class Table extends Observable {
     }
 
     private static class AIThinkTank extends SwingWorker<Move, String> {
-        private AIThinkTank() {
-
-        }
-
         @Override
         protected Move doInBackground() throws Exception {
             final MoveStrategy alphaBeta = new AlphaBeta(Table.get().gameSetup.getSearchDepth());
@@ -148,6 +145,7 @@ public class Table extends Observable {
         gameFrame.setLayout(new BorderLayout());
         gameFrame.setJMenuBar(createTableMenuBar());
         gameFrame.setSize(OUTER_FRAME_DIMENSION);
+        gameFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         this.chessBoard = Board.createStandardBoard();
         this.boardPanel = new BoardPanel();
@@ -155,6 +153,8 @@ public class Table extends Observable {
         this.moveLog = new MoveLog();
         this.gameHistoryPanel = new GameHistoryPanel();
         this.takenPiecesPanel = new TakenPiecesPanel();
+        this.progressBarPanel = new JProgressBar();
+        progressBarPanel.setMinimum(0);
         this.gameSetup = new GameSetup(gameFrame, true);
 
         this.addObserver(new TableGameAIWatcher());
@@ -165,6 +165,7 @@ public class Table extends Observable {
         gameFrame.add(boardPanel, BorderLayout.CENTER);
         gameFrame.add(this.takenPiecesPanel, BorderLayout.WEST);
         gameFrame.add(this.gameHistoryPanel, BorderLayout.EAST);
+        gameFrame.add(this.progressBarPanel, BorderLayout.SOUTH);
         gameFrame.setVisible(true);
     }
 
@@ -179,9 +180,13 @@ public class Table extends Observable {
     private JMenu createFileMenu() {
         final JMenu fileMenu = new JMenu("File");
 
-        final JMenuItem openPGN = new JMenuItem("Load PGN File");
+        /*final JMenuItem openPGN = new JMenuItem("Load PGN File");
         openPGN.addActionListener(e -> System.out.println("open!"));
-        fileMenu.add(openPGN);
+        fileMenu.add(openPGN);*/
+
+        final JMenuItem toFen = new JMenuItem("> FEN");
+        toFen.addActionListener(e -> JOptionPane.showMessageDialog(boardPanel, FenUtilities.createFENFromBoard(chessBoard)));
+        fileMenu.add(toFen);
 
         final JMenuItem exitMenuItem = new JMenuItem("Exit");
         exitMenuItem.addActionListener(e -> System.exit(0));
@@ -192,13 +197,6 @@ public class Table extends Observable {
 
     private JMenu createPreferencesMenu() {
         final JMenu preferencesMenu = new JMenu("Preferences");
-        /*final JMenuItem flipBoardMenuItem = new JMenuItem("Flip Board");
-        flipBoardMenuItem.addActionListener(e -> {
-            boardDirection = boardDirection.getOpposite();
-            boardPanel.drawBoard(chessBoard);
-        });
-        preferencesMenu.add(flipBoardMenuItem);*/
-
         preferencesMenu.addSeparator();
         final JCheckBoxMenuItem legalMoveHighlighterCheckBox = new JCheckBoxMenuItem("Highlight Legal Moves", true);
         legalMoveHighlighterCheckBox.addActionListener(e -> highlightLegalMoves = legalMoveHighlighterCheckBox.isSelected());
@@ -220,35 +218,6 @@ public class Table extends Observable {
 
         return optionsMenu;
     }
-    /*private enum BoardDirection {
-        NORMAL {
-            @Override
-            List<TilePanel> traverse(List<TilePanel> boardTiles) {
-                return boardTiles;
-            }
-
-            @Override
-            BoardDirection getOpposite() {
-                return FLIPPED;
-            }
-        },
-        FLIPPED {
-            @Override
-            List<TilePanel> traverse(List<TilePanel> boardTiles) {
-                return Lists.reverse(boardTiles);
-            }
-
-            @Override
-            BoardDirection getOpposite() {
-                return NORMAL;
-            }
-        };
-
-        abstract List<TilePanel> traverse(List<TilePanel> boardTiles);
-
-        abstract BoardDirection getOpposite();
-
-    }*/
 
     enum PlayerType {
         HUMAN,
@@ -422,6 +391,7 @@ public class Table extends Observable {
             });
 
             validate();
+            repaint();
         }
 
         private void assignTilePieceIcon(final Board board) {
