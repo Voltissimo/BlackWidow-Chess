@@ -8,7 +8,7 @@ import com.chess.engine.pieces.Piece;
 import com.chess.engine.player.MoveStatus;
 import com.chess.engine.player.MoveTransition;
 import com.chess.engine.player.ai.AlphaBeta;
-/*import com.chess.engine.player.ai.MiniMax;*/
+        /*import com.chess.engine.player.ai.MiniMax;*/
 import com.chess.engine.player.ai.MoveStrategy;
 import com.chess.pgn.FenUtilities;
 import com.google.common.collect.ImmutableList;
@@ -39,14 +39,18 @@ public class Table extends Observable {
 
     private Tile sourceTile;
     private Tile destinationTile;
+    private int lastMovedPieceSourceCoordinate = -1;
+    private int lastMovedPieceDestinationCoordinate = -1;
     private Piece humanMovedPiece;
 
     private static final Dimension TILE_PANEL_DIMENSION = new Dimension(10, 10);
     private static final Dimension OUTER_FRAME_DIMENSION = new Dimension(600, 600);
     private static final Dimension BOARD_PANEL_DIMENSION = new Dimension(400, 350);
 
-    private static final Color LIGHT_TILE_COLOR = Color.decode("#FFFACD");
-    private static final Color DARK_TILE_COLOR = Color.decode("#593E1A");
+    private static final Color LIGHT_TILE_COLOR = Color.decode("#F2E6C1");
+    private static final Color DARK_TILE_COLOR = Color.decode("#C1A176");
+    private static final Color INDICATOR_COLOR = Color.decode("#C1DB92");
+    private static final Color INDICATOR_COLOR2 = Color.decode("#CEE5A2");
 
     private static boolean dispatched = false;
 
@@ -113,7 +117,7 @@ public class Table extends Observable {
 
     private static class AIThinkTank extends SwingWorker<Move, String> {
         @Override
-        protected Move doInBackground() throws Exception {
+        protected Move doInBackground() {
             final MoveStrategy alphaBeta = new AlphaBeta(Table.get().gameSetup.getSearchDepth());
             /*final MoveStrategy miniMax = new MiniMax(Table.get().gameSetup.getSearchDepth());*/
 
@@ -132,6 +136,8 @@ public class Table extends Observable {
                 Table.get().takenPiecesPanel.redo(Table.get().moveLog);
                 Table.get().boardPanel.drawBoard(newBoard);
                 Table.get().moveMadeUpdate(PlayerType.COMPUTER);
+                Table.get().lastMovedPieceSourceCoordinate = bestMove.getCurrentCoordinate();
+                Table.get().lastMovedPieceDestinationCoordinate = bestMove.getDestinationCoordinate();
                 dispatched = false;
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
@@ -185,8 +191,12 @@ public class Table extends Observable {
         fileMenu.add(openPGN);*/
 
         final JMenuItem toFen = new JMenuItem("> FEN");
-        toFen.addActionListener(e -> JOptionPane.showMessageDialog(boardPanel, FenUtilities.createFENFromBoard(chessBoard)));
+        toFen.addActionListener(e -> JOptionPane.showInputDialog(boardPanel, FenUtilities.createFENFromBoard(chessBoard)));
         fileMenu.add(toFen);
+
+        final JMenuItem takeBack = new JMenuItem("Take back");
+        takeBack.addActionListener(e -> Table.get().moveLog.takeBackTwoMoves());
+        fileMenu.add(takeBack);
 
         final JMenuItem exitMenuItem = new JMenuItem("Exit");
         exitMenuItem.addActionListener(e -> System.exit(0));
@@ -241,9 +251,41 @@ public class Table extends Observable {
             return this.moveTexts;
         }
 
+        void updateBoard() {
+            if (size() >= 1) {
+                Move move = moves.get(moves.size() - 1);
+                Table.get().chessBoard = move.execute();
+                Table.get().lastMovedPieceSourceCoordinate = move.getCurrentCoordinate();
+                Table.get().lastMovedPieceDestinationCoordinate = move.getDestinationCoordinate();
+                Table.get().boardPanel.drawBoard(Table.get().chessBoard);
+            } else {
+                Table.get().chessBoard = Board.createStandardBoard();
+                Table.get().lastMovedPieceSourceCoordinate = -1;
+                Table.get().lastMovedPieceDestinationCoordinate = -1;
+                Table.get().boardPanel.drawBoard(Table.get().chessBoard);
+            }
+            Table.get().gameHistoryPanel.redo(this);
+        }
+
         void addMove(Move move, Board board) {
             this.moves.add(move);
             this.moveTexts.add(move.toString() + calculateCheckAndCheckMateHash(board));
+            updateBoard();
+        }
+
+        void takeBackTwoMoves() {
+            if (!dispatched) {  // prevent taking back while bot is thinking
+                int count = 0;
+                int size = size();
+                while (size >= 1 && count++ < 2) {
+                    this.moves.remove(size - 1);
+                    this.moveTexts.remove(size - 1);
+                    size--;
+                }
+                updateBoard();
+            } else {
+                JOptionPane.showMessageDialog(Table.get().boardPanel, "Cannot take back move while bot is thinking.\n PATIENCE");
+            }
         }
 
         int size() {
@@ -285,7 +327,7 @@ public class Table extends Observable {
         final List<TilePanel> boardTiles;
 
         BoardPanel() {
-            super(new GridLayout(8, 8));
+            super(new GridLayout(9, 9));
             this.boardTiles = new ArrayList<>();
 
             for (int i = 0; i < 64; i++) {
@@ -304,8 +346,8 @@ public class Table extends Observable {
                 tilePanel.drawTile(board);
                 add(tilePanel);
             }
-            validate();
             repaint();
+            validate();
         }
     }
 
@@ -340,6 +382,8 @@ public class Table extends Observable {
                                 if (transition.getMoveStatus() == MoveStatus.DONE) {
                                     chessBoard = transition.getBoard();
                                     moveLog.addMove(move, chessBoard);
+                                    lastMovedPieceSourceCoordinate = move.getCurrentCoordinate();
+                                    lastMovedPieceDestinationCoordinate = move.getDestinationCoordinate();
 
                                     // reset
                                     sourceTile = null;
@@ -439,9 +483,16 @@ public class Table extends Observable {
         }
 
         private void assignTileColor() {
-            int numberRow = this.tileId / 8;
-            int numberCol = this.tileId % 8;
-            setBackground((numberRow + numberCol) % 2 == 0 ? LIGHT_TILE_COLOR : DARK_TILE_COLOR);
+            if (lastMovedPieceDestinationCoordinate == this.tileId) {
+                setBackground(INDICATOR_COLOR);
+            } else if (lastMovedPieceSourceCoordinate == this.tileId) {
+                setBackground(INDICATOR_COLOR2);
+
+            } else {
+                int numberRow = this.tileId / 8;
+                int numberCol = this.tileId % 8;
+                setBackground((numberRow + numberCol) % 2 == 0 ? LIGHT_TILE_COLOR : DARK_TILE_COLOR);
+            }
 
         }
 

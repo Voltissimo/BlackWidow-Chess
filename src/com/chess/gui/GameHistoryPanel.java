@@ -15,11 +15,13 @@ class GameHistoryPanel extends JPanel {
     private static final Dimension HISTORY_PANEL_DIMENSION = new Dimension(100, 400);
     private final DataModel model;
     private final JScrollPane scrollPane;
+    private final JTable table;
 
     GameHistoryPanel() {
+
         this.setLayout(new BorderLayout());
         this.model = new DataModel();
-        final JTable table = new JTable(model);
+        table = new JTable(model);
         table.setRowHeight(15);
         scrollPane = new JScrollPane(table);
         scrollPane.setColumnHeaderView(table.getTableHeader());
@@ -30,6 +32,8 @@ class GameHistoryPanel extends JPanel {
 
     void redo(MoveLog moveLog) {
         /*this.model.clear();*/
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.setRowCount(0);
         for (int i = 0; i < moveLog.size(); i++) {
             final Move move = moveLog.getMoves().get(i);
             final String moveText = moveLog.getMoveTexts().get(i);
@@ -40,6 +44,8 @@ class GameHistoryPanel extends JPanel {
                 this.model.setValueAt(moveText, currentRow, 1);
             }
         }
+        repaint();
+        validate();  // WHY DON'T YOU FREAKING UPDATE
 
         final JScrollBar verticalScroll = scrollPane.getVerticalScrollBar();
         verticalScroll.setValue(verticalScroll.getMaximum());
@@ -140,5 +146,6 @@ class GameHistoryPanel extends JPanel {
         public String getColumnName(int col) {
             return NAMES[col];
         }
+
     }
 }

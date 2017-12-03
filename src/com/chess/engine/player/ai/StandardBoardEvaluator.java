@@ -6,7 +6,7 @@ import com.chess.engine.player.Player;
 
 public final class StandardBoardEvaluator implements BoardEvaluator {
 
-    private static final int CHECK_BONUS = 10/*100*/;
+    private static final int CHECK_BONUS = 1/*100*/;
     private static final int CHECKMATE_BONUS = 1000;
     private static final int DEPTH_BONUS_AMPLIFIER = 2;
     private static final int CASTLE_BONUS = 25;
