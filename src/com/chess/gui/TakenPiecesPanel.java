@@ -71,7 +71,7 @@ class TakenPiecesPanel extends JPanel {
             try {
                 final BufferedImage image = ImageIO.read(new File(DEFAULT_PIECE_IMAGES_PATH
                         + takenPiece.getPieceAlliance().toString().substring(0, 1)
-                        + takenPiece.toString() + ".gif"));
+                        + takenPiece.toString() + ".png"));
                 final ImageIcon imageIcon = new ImageIcon(image);
                 final JLabel imageLabel = new JLabel(imageIcon);
                 this.southPanel.add(imageLabel);

@@ -445,7 +445,7 @@ public class Table extends Observable {
                     final Piece pieceOnTile = board.getTile(this.tileId).getPiece();
                     final BufferedImage image = ImageIO.read(new File(DEFAULT_PIECE_IMAGES_PATH
                             + pieceOnTile.getPieceAlliance().toString().substring(0, 1)
-                            + pieceOnTile.toString() + ".gif"));
+                            + pieceOnTile.toString() + ".png"));
                     add(new JLabel(new ImageIcon(image)));
                 } catch (IOException e) {
                     e.printStackTrace();
